@@ -5,17 +5,46 @@ var uiController = (function(){
         inputDescription: '.add__description',
         inputValue: '.add__value', 
         addBtn: '.add__btn',
+        incomeList: '.income__list',
+        expenseList: '.expenses__list'
     };
     return { 
         getInput: function(){
             return {
                 type: document.querySelector(DOMstrings.inputType).value, 
                 description: document.querySelector(DOMstrings.inputDescription).value,
-                value: document.querySelector(DOMstrings.inputValue).value
+                value: parseInt(document.querySelector(DOMstrings.inputValue).value)
             };
         },
         getDomStrings: function(){
             return DOMstrings;
+        },
+        clearField: function(){
+            var fields = document.querySelectorAll(DOMstrings.inputDescription + ", " + DOMstrings.inputValue);
+
+            // Convert list to array
+            var fieldsArr = Array.prototype.slice.call(fields); 
+            for (var i = 0; i < fieldsArr.length; i++){
+                fieldsArr[i].value = " ";
+            }
+            fieldsArr[0].focus();
+        },
+        addListItem: function(item,type){
+            //Орлого зарлагын элементийг агуулсан html-ийг бэлтгэнэ.
+                var html , listType;
+                if(type === "inc"){
+                    listType = DOMstrings.incomeList;
+                    html = '<div class="item clearfix" id="income-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">+%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                } else {
+                    listType = DOMstrings.expenseList;
+                    html = ' <div class="item clearfix" id="expense-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">- %value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+                }
+            // Тэр HTML дотроо орлого зарлагын утгуудыг REPLACE ашиглаж өөрчилж өгнө.
+                  html = html.replace("%id%", item.id);
+                  html = html.replace("%desc%" , item.description);
+                  html = html.replace("%value%", item.value);
+            // Бэлтгэсэн HTML ээ DOM руу хийж өгнө.
+                document.querySelector(listType).insertAdjacentHTML('beforeend', html);
         }
     };
 })();
@@ -33,24 +62,6 @@ var financeController = (function(){
                 exp: 0
             }
         };
-        return {
-            addItem: function(type, desc, val){
-              var item;
-              // identification 
-
-              if(data.allItems[type].length === 0){
-                  id = 1;
-              } else {
-                  id = data.allItems[type][data.allItems[type].length - 1].id + 1;
-              }
-                if( type === "inc"){
-                    item = new Income(id , desc , val);
-                }else {
-                    item = new Expense(id , desc , val);
-                }
-                data.allItems[type].push(item);
-            }
-        };
         var Income = function(id , description , value){
             this.id = id;
             this.description = description;
@@ -61,6 +72,27 @@ var financeController = (function(){
             this.description = description;
             this.value = value;
         };
+        return {
+            addItem: function(type, desc, val){
+              var item , id;
+              // identification 
+
+              if(data.allItems[type].length === 0) id = 1;
+               else {
+                  id = data.allItems[type][data.allItems[type].length - 1].id + 1;
+              };
+                if( type === "inc"){
+                    item = new Income(id , desc , val);
+                }else {
+                    item = new Expense(id , desc , val);
+                };
+                data.allItems[type].push(item);
+                return item;
+            },
+            seeData: function(){
+                return data;
+            }
+        };
 })();
 
 //Програмын холбогч контроллер
@@ -68,14 +100,22 @@ var appController = (function(uiController , fnController){
         var ctrlAddItem = function(){
           // 1. Оруулах өгөгдөлийг дэлгэцээс олж авна.
             var input = uiController.getInput();
-        // 2. Олж авсан өгөгдлүүдээ санхүүгийн контроллерт дамжуулж тэнд хадгална.
-            financeController.addItem(input.type,input.description, input.value);
+            if ( input.description !== '' && input.value !== ''){
+                    // 2. Олж авсан өгөгдлүүдээ санхүүгийн контроллерт дамжуулж тэнд хадгална.
+                        var item = financeController.addItem(
+                            input.type,
+                            input.description, 
+                            input.value);
 
-        // 3. Олж авсан өгөгдлүүдээ вэб дээрээ тохирох хэсэгт нь гаргана 
+                    // 3. Олж авсан өгөгдлүүдээ вэб дээрээ тохирох хэсэгт нь гаргана 
+                        uiController.addListItem(item , input.type);
+                        uiController.clearField();
+                    // 4. Төсвийг тооцоолно.
 
-        // 4. Төсвийг тооцоолно.
-
-        // 5. Эцсийн үлдэгдэл, тооцоог дэлгэцэнд гаргана.
+                    // 5. Эцсийн үлдэгдэл, тооцоог дэлгэцэнд гаргана.
+                    
+            }
+        
     }
     var setupEventListeners = function(){
         var DOM = uiController.getDomStrings();
