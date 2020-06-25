@@ -6,7 +6,12 @@ var uiController = (function(){
         inputValue: '.add__value', 
         addBtn: '.add__btn',
         incomeList: '.income__list',
-        expenseList: '.expenses__list'
+        expenseList: '.expenses__list',
+        tusuvDelgets: ".budget__value",
+        orlogoDelgets: ".budget__income--value",
+        zarlagaDelgets: ".budget__expenses--value",
+        huviDelgets: ".budget__expenses--percentage"
+
     };
     return { 
         getInput: function(){
@@ -45,7 +50,17 @@ var uiController = (function(){
                   html = html.replace("%value%", item.value);
             // Бэлтгэсэн HTML ээ DOM руу хийж өгнө.
                 document.querySelector(listType).insertAdjacentHTML('beforeend', html);
-        }
+        },
+        tusviigUzuuleh : function(tusuv){
+            document.querySelector(DOMstrings.tusuvDelgets).textContent = tusuv.tusuv;
+            document.querySelector(DOMstrings.orlogoDelgets).textContent = tusuv.totalInc;
+            document.querySelector(DOMstrings.zarlagaDelgets).textContent = tusuv.totalExp;
+            if(tusuv.huvi !== 0){
+                 document.querySelector(DOMstrings.huviDelgets).textContent = tusuv.huvi + "%";
+            } else {
+                document.querySelector(DOMstrings.huviDelgets).textContent = tusuv.huvi
+            }
+        },
     };
 })();
 
@@ -60,7 +75,12 @@ var financeController = (function(){
             totals: {
                 inc: 0,
                 exp: 0
-            }
+            },
+
+            tusuv: 0,
+
+            huvi: 0
+
         };
         var Income = function(id , description , value){
             this.id = id;
@@ -72,7 +92,36 @@ var financeController = (function(){
             this.description = description;
             this.value = value;
         };
+        var calculateTotal = function(type){
+            var sum = 0;
+            data.allItems[type].forEach(function(el){
+                sum = sum + el.value;
+            });
+            data.totals[type] = sum;
+        }
         return {
+            tusuvTootsooloh: function(){
+                
+                // niit orlogin niilberiig tootsoolno.
+                calculateTotal('inc');
+                // niit zarlagin niilberiig tootsoolno.
+                calculateTotal('exp'); 
+
+                // tusuviig shineer tootsolno .
+                data.tusuv = data.totals.inc - data.totals.exp;
+
+                // Orlogo zarlagin huwiig tootsoolno.
+                data.huvi = Math.round((data.totals.exp / data.totals.inc) * 100);
+
+            },
+            tusuvAvah: function(){
+                return{
+                    tusuv : data.tusuv,
+                    huvi : data.huvi,
+                    totalInc : data.totals.inc,
+                    totalExp : data.totals.exp
+                }
+            },
             addItem: function(type, desc, val){
               var item , id;
               // identification 
@@ -111,9 +160,11 @@ var appController = (function(uiController , fnController){
                         uiController.addListItem(item , input.type);
                         uiController.clearField();
                     // 4. Төсвийг тооцоолно.
-
+                        financeController.tusuvTootsooloh();
                     // 5. Эцсийн үлдэгдэл, тооцоог дэлгэцэнд гаргана.
-                    
+                        var tusuv = financeController.tusuvAvah();
+                    // 6. Эцсийн төсвийн тооцоог дэлгэцэнд гаргана.
+                        uiController.tusviigUzuuleh(tusuv);
             }
         
     }
@@ -133,6 +184,12 @@ var appController = (function(uiController , fnController){
     return {
         init: function (){
             console.log('Application started.....');
+            uiController.tusviigUzuuleh({
+                tusuv : 0,
+                totalInc: 0,
+                totalExp: 0,
+                huvi: 0
+            });
             setupEventListeners();
         }
     }
