@@ -110,6 +110,14 @@ var uiController = (function(){
             var el = document.getElementById(id);
             el.parentNode.removeChild(el);
         },
+        changeType: function(){
+            var fields = document.querySelectorAll(DOMstrings.inputType + ", " + DOMstrings.inputDescription + ", " + DOMstrings.inputValue);
+            nodelistForeach(fields , function(el){
+                el.classList.toggle("red-focus");
+            });
+            document.querySelector(DOMstrings.addBtn).classList.toggle("red");
+        }
+
     };
 })();
 
@@ -280,6 +288,7 @@ var appController = (function(uiController , fnController){
                 updateTusuv();
             }
         });
+        document.querySelector(DOM.inputType).addEventListener("change", uiController.changeType);
     };
     return {
         init: function (){
